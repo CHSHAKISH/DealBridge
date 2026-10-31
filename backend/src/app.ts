@@ -1,0 +1,48 @@
+import express, { Request, Response } from 'express';
+import cors from 'cors';
+import { config } from './config/index.js';
+
+export const app = express();
+
+app.use(cors({
+  origin: config.frontendUrl,
+  credentials: true,
+}));
+
+// We need raw body for webhook signature verification on specific routes
+app.use(express.json({
+  verify: (req: any, _res, buf) => {
+    req.rawBody = buf;
+  }
+}));
+app.use(express.urlencoded({ extended: true }));
+
+// Health Check Endpoint
+app.get('/health', (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: 'healthy',
+    service: 'DealBridge Integration Engine',
+    timestamp: new Date().toISOString(),
+    environment: config.nodeEnv,
+    zohoRegion: config.zoho.region,
+    baseCurrency: config.business.defaultCurrency,
+  });
+});
+
+// Root API Welcome
+app.get('/api', (_req: Request, res: Response) => {
+  res.json({
+    message: 'Welcome to DealBridge API',
+    endpoints: {
+      health: '/health',
+      webhooksHubspot: '/api/webhooks/hubspot',
+      webhooksZoho: '/api/webhooks/zoho',
+      deals: '/api/deals',
+      logs: '/api/logs',
+      collections: '/api/collections',
+    }
+  });
+});
+
+export default app;
+

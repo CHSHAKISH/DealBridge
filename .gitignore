@@ -11,6 +11,8 @@ node_modules/
 .env.production.local
 *.env
 
+context/
+
 # Build outputs
 dist/
 build/
@@ -36,3 +38,4 @@ logs/
 Thumbs.db
 .vscode/
 .idea/
+

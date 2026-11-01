@@ -20,9 +20,10 @@ export class CustomerMatcher {
     return name
       .toLowerCase()
       .trim()
-      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '') // remove punctuation
-      .replace(/\s+/g, ' ')                        // collapse whitespace
-      .replace(/\b(llc|ltd|limited|inc|incorporated|corp|corporation|fz-llc|fz llc)\b/gi, '')
+      .replace(/[-_]/g, '')                          // remove hyphens inside words (e.g. Nova-Tech -> NovaTech)
+      .replace(/[.,\/#!$%\^&\*;:{}=`~()]/g, ' ')     // replace other punctuation with space
+      .replace(/\s+/g, ' ')                          // collapse whitespace
+      .replace(/\b(llc|ltd|limited|inc|incorporated|corp|corporation|fz llc|fzllc)\b/gi, '')
       .trim();
   }
 

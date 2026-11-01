@@ -180,23 +180,25 @@ export const LogsPage: React.FC = () => {
       {/* Logs Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1050px] text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 font-semibold text-slate-600 uppercase tracking-wider">
-                <th className="py-2.5 px-4 whitespace-nowrap">Timestamp</th>
-                <th className="py-2.5 px-4 whitespace-nowrap">System</th>
-                <th className="py-2.5 px-4 whitespace-nowrap">Direction</th>
-                <th className="py-2.5 px-4">Method & Endpoint</th>
-                <th className="py-2.5 px-4 whitespace-nowrap">Status</th>
-                <th className="py-2.5 px-4 whitespace-nowrap">Duration</th>
-                <th className="py-2.5 px-4">Deal / Correlation</th>
-                <th className="py-2.5 px-4 text-right whitespace-nowrap min-w-[90px]">Inspect</th>
+                <th className="py-3 px-3.5 whitespace-nowrap">Timestamp</th>
+                <th className="py-3 px-3 whitespace-nowrap">System</th>
+                <th className="py-3 px-3 whitespace-nowrap">Direction</th>
+                <th className="py-3 px-3.5">Method & Endpoint</th>
+                <th className="py-3 px-3 text-center whitespace-nowrap">Status</th>
+                <th className="py-3 px-3 whitespace-nowrap">Duration</th>
+                <th className="py-3 px-3.5">Deal / Correlation</th>
+                <th className="py-3 px-4 text-center whitespace-nowrap sticky right-0 bg-slate-50 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.06)] z-10 w-24">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {filteredLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-10 text-slate-400">
+                  <td colSpan={8} className="text-center py-12 text-slate-400">
                     No integration logs match the search or filter conditions.
                   </td>
                 </tr>
@@ -208,16 +210,16 @@ export const LogsPage: React.FC = () => {
                     <tr
                       key={log.id}
                       onClick={() => setInspectedLog(log)}
-                      className="hover:bg-blue-50/40 cursor-pointer transition-colors"
+                      className="hover:bg-blue-50/50 cursor-pointer transition-colors group"
                     >
-                      <td className="py-3 px-4 text-slate-500 whitespace-nowrap">
-                        <div>{new Date(log.createdAt).toLocaleTimeString()}</div>
+                      <td className="py-3 px-3.5 text-slate-500 whitespace-nowrap">
+                        <div className="font-medium text-slate-700">{new Date(log.createdAt).toLocaleTimeString()}</div>
                         <div className="text-[10px] text-slate-400">
                           {new Date(log.createdAt).toISOString().split('T')[0]}
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 whitespace-nowrap">
+                      <td className="py-3 px-3 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded font-semibold text-[11px] ${
                           log.system === 'ZOHO' 
                             ? 'bg-amber-50 text-amber-700 border border-amber-200' 
@@ -227,7 +229,7 @@ export const LogsPage: React.FC = () => {
                         </span>
                       </td>
 
-                      <td className="py-3 px-4 whitespace-nowrap">
+                      <td className="py-3 px-3 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium text-[11px] whitespace-nowrap ${
                           log.direction === 'OUTBOUND'
                             ? 'bg-blue-50 text-blue-700 border border-blue-200'
@@ -237,13 +239,15 @@ export const LogsPage: React.FC = () => {
                         </span>
                       </td>
 
-                      <td className="py-3 px-4 font-mono">
+                      <td className="py-3 px-3.5 font-mono max-w-[220px]">
                         <span className="font-bold text-slate-900 mr-1.5">{log.method}</span>
-                        <span className="text-slate-600">{log.endpoint}</span>
+                        <span className="text-slate-600 truncate inline-block align-bottom max-w-[150px]" title={log.endpoint}>
+                          {log.endpoint}
+                        </span>
                       </td>
 
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        <span className={`px-2 py-0.5 rounded-full font-bold text-[11px] ${
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                        <span className={`px-2 py-0.5 rounded-full font-bold text-[11px] inline-block ${
                           isSuccess
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : 'bg-rose-50 text-rose-700 border border-rose-200'
@@ -252,26 +256,29 @@ export const LogsPage: React.FC = () => {
                         </span>
                       </td>
 
-                      <td className="py-3 px-4 text-slate-500 font-mono whitespace-nowrap">
+                      <td className="py-3 px-3 text-slate-500 font-mono whitespace-nowrap">
                         {log.durationMs}ms
                       </td>
 
-                      <td className="py-3 px-4">
-                        <div className="font-medium text-slate-800 truncate max-w-xs">
+                      <td className="py-3 px-3.5 max-w-[200px]">
+                        <div className="font-medium text-slate-800 truncate" title={log.deal?.name || 'General Sync'}>
                           {log.deal?.name || 'General Sync / Hook'}
                         </div>
-                        <div className="text-[10px] text-slate-400 font-mono">{log.correlationId}</div>
+                        <div className="text-[10px] text-slate-400 font-mono truncate" title={log.correlationId}>
+                          {log.correlationId}
+                        </div>
                       </td>
 
-                      <td className="py-3 px-4 text-right whitespace-nowrap min-w-[90px]">
+                      {/* Sticky Right Action Button - Always 100% visible */}
+                      <td className="py-3 px-4 text-center whitespace-nowrap sticky right-0 bg-white group-hover:bg-blue-50/50 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.06)] z-10 transition-colors">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setInspectedLog(log);
                           }}
-                          className="px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded transition-colors"
+                          className="px-3 py-1.5 text-xs font-semibold bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white rounded-lg border border-blue-200 hover:border-blue-600 transition-all shadow-xs flex items-center justify-center space-x-1 mx-auto"
                         >
-                          Inspect
+                          <span>Inspect</span>
                         </button>
                       </td>
                     </tr>

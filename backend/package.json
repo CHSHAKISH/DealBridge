@@ -15,7 +15,8 @@
     "seed": "tsx src/database/seed.ts",
     "zoho:token": "tsx src/scripts/get-zoho-token.ts",
     "verify:env": "tsx src/scripts/verify-connections.ts",
-    "hubspot:properties": "tsx src/scripts/setup-hubspot-properties.ts"
+    "hubspot:properties": "tsx src/scripts/setup-hubspot-properties.ts",
+    "seed:20": "tsx src/scripts/seed-20-deals.ts"
   },
   "keywords": [
     "crm",

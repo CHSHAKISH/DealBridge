@@ -308,3 +308,4 @@ model SyncCursor {
   @@unique([source, entityType])
   @@map("sync_cursors")
 }
+

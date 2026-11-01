@@ -85,3 +85,4 @@ export interface ApiMetrics {
   zohoCallsLastSync: number;
   hubspotCallsTotal: number;
 }
+

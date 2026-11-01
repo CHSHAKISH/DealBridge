@@ -24,3 +24,4 @@ describe('CustomerMatcher: Normalization & Matching Rules', () => {
     expect(CustomerMatcher.normalizeCompanyName(variantA)).toBe(CustomerMatcher.normalizeCompanyName(variantB));
   });
 });
+

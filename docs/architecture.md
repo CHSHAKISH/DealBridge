@@ -119,3 +119,4 @@ flowchart TD
 
 ### 2.5 Diff-Based CRM Property Updates
 - HubSpot deal property writes are diff-checked against current values. If no values changed, the write is suppressed, conserving API quotas.
+

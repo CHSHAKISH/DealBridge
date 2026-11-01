@@ -59,3 +59,4 @@ describe('FinancialEngine: Money & UAE VAT Arithmetic', () => {
     expect(FinancialEngine.verifyInvariant(financials)).toBe(true);
   });
 });
+

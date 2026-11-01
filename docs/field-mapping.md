@@ -36,3 +36,4 @@ This document defines the field-level mappings, authoritative system ownership, 
 2. **Zoho Books Owns Financial Documents & Cash:** Zoho Books is the single source of truth for invoice statuses, payments received, credit notes, and tax reporting.
 3. **Integration Owns Telemetry & Derived Metrics:** DealBridge owns synchronization timestamps, aging bucket classifications, payment multi-deal allocations, and idempotency states.
 4. **Diff-Based Writes Only:** HubSpot custom fields are updated **only** when calculated values differ from current CRM values, preventing redundant API calls and audit clutter.
+

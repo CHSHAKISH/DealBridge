@@ -93,3 +93,4 @@ export async function handleHubSpotWebhook(req: Request, res: Response) {
   // Immediately respond 200 OK
   return res.status(200).json({ received: true, count: events.length });
 }
+

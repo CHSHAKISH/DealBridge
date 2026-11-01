@@ -68,3 +68,4 @@ sequenceDiagram
     Worker->>CRM: PATCH /objects/deals (Collected: 63k, % Collected: 50%, Unpaid: 37.8k)
     CRM-->>Sales: Sales team sees live payment status & aging on Deal!
 ```
+

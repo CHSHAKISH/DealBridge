@@ -95,3 +95,4 @@ This document contains detailed architectural and operational answers to the 7 r
    - **Last Synced Timestamp:** The dashboard shows the exact timestamp of the last successful synchronization.
 4. **HubSpot Deals Remain Operational:** Deals in HubSpot show `zoho_integration_status = 'pending'`, preventing sales from believing orders were lost.
 5. **Auto-Resume at Quota Reset:** BullMQ resumes job execution as soon as the quota resets at midnight, clearing all pending orders with zero duplicate records.
+

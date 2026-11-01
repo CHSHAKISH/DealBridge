@@ -53,3 +53,4 @@ dealWorker.on('completed', (job: Job) => {
 dealWorker.on('failed', (job: Job | undefined, err: Error) => {
   console.error(`[DealWorker] Job ${job?.id} failed with error:`, err.message);
 });
+

@@ -1,0 +1,310 @@
+// DealBridge Database Schema
+// PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SyncStatus {
+  SYNCED
+  PENDING
+  IN_PROGRESS
+  NEEDS_REVIEW
+  ERROR
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PARTIALLY_PAID
+  PAID
+  VOID
+}
+
+enum MilestoneStatus {
+  PENDING
+  TRIGGERED
+  INVOICED
+}
+
+enum OperationStatus {
+  PENDING
+  IN_FLIGHT
+  COMPLETED
+  FAILED
+}
+
+enum WebhookStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+enum SystemSource {
+  HUBSPOT
+  ZOHO
+}
+
+enum TrafficDirection {
+  INBOUND
+  OUTBOUND
+}
+
+// 1. Customers Table (HubSpot Company <-> Zoho Contact)
+model Customer {
+  id                 String     @id @default(uuid())
+  hubspotCompanyId   String?    @unique
+  zohoContactId      String?    @unique
+  companyName        String
+  normalizedName     String
+  taxRegistrationNo  String?    // Tax Registration Number (TRN)
+  domain             String?
+  email              String?
+  currency           String     @default("AED")
+  syncStatus         SyncStatus @default(PENDING)
+  notes              String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  deals              Deal[]
+  salesOrders        SalesOrder[]
+
+  @@index([normalizedName])
+  @@index([taxRegistrationNo])
+  @@index([domain])
+  @@map("customers")
+}
+
+// 2. Deals Table (HubSpot Deal Record)
+model Deal {
+  id                   String       @id @default(uuid())
+  hubspotDealId        String       @unique
+  name                 String
+  customerId           String
+  stage                String       // e.g. "closedwon"
+  currency             String       @default("AED")
+  dealValueMinorUnits  BigInt       // Integer minor units (fils: 120,000 AED = 12,000,000 fils)
+  vatRatePercent       Decimal      @default(5.00) @db.Decimal(5, 2)
+  vatAmountMinorUnits  BigInt       // 6,000 AED = 600,000 fils
+  totalAmountMinorUnits BigInt      // 126,000 AED = 12,600,000 fils
+  zohoSalesOrderId     String?
+  syncStatus           SyncStatus   @default(PENDING)
+  syncError            String?
+  lastSyncedAt         DateTime?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  customer             Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  salesOrder           SalesOrder?
+  milestones           Milestone[]
+  invoices             Invoice[]
+  paymentAllocations   PaymentAllocation[]
+  operations           IntegrationOperation[]
+  logs                 IntegrationLog[]
+
+  @@index([syncStatus])
+  @@map("deals")
+}
+
+// 3. Products Mapping Table (CRM Product <-> Zoho Item)
+model Product {
+  id             String   @id @default(uuid())
+  crmProductName String   @unique
+  crmProductCode String?
+  zohoItemId     String   @unique
+  zohoItemName   String
+  taxRatePercent Decimal  @default(5.00) @db.Decimal(5, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("products")
+}
+
+// 4. Sales Orders Table (Zoho Sales Order)
+model SalesOrder {
+  id                  String     @id @default(uuid())
+  dealId              String     @unique
+  customerId          String
+  zohoSalesOrderId    String     @unique
+  salesOrderNumber    String
+  referenceNumber     String?    // Links back to HubSpot deal
+  totalMinorUnits     BigInt
+  vatMinorUnits       BigInt
+  status              String     @default("open")
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  deal                Deal       @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  customer            Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  invoices            Invoice[]
+
+  @@map("sales_orders")
+}
+
+// 5. Invoices Table (Milestone Invoices in Zoho)
+model Invoice {
+  id                   String        @id @default(uuid())
+  salesOrderId         String
+  dealId               String
+  milestoneNumber      Int           // 1, 2, or 3
+  zohoInvoiceId        String        @unique
+  invoiceNumber        String
+  status               InvoiceStatus @default(DRAFT)
+  amountMinorUnits     BigInt        // Base before VAT
+  vatMinorUnits        BigInt        // VAT amount
+  totalMinorUnits      BigInt        // Total including VAT
+  paidMinorUnits       BigInt        @default(0)
+  balanceMinorUnits    BigInt
+  dueDate              DateTime
+  sentAt               DateTime?
+  voidedAt             DateTime?
+  replacementInvoiceId String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  salesOrder           SalesOrder    @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  deal                 Deal          @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  paymentAllocations   PaymentAllocation[]
+
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+// 6. Payments Table (Payments received in Zoho)
+model Payment {
+  id                String              @id @default(uuid())
+  zohoPaymentId     String              @unique
+  paymentNumber     String
+  paymentDate       DateTime
+  totalMinorUnits   BigInt
+  paymentMode       String?
+  referenceNumber   String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  allocations       PaymentAllocation[]
+
+  @@map("payments")
+}
+
+// 7. Payment Allocations Table (Many-to-Many: 1 payment across multiple invoices/deals)
+model PaymentAllocation {
+  id                  String   @id @default(uuid())
+  paymentId           String
+  invoiceId           String
+  dealId              String
+  allocatedMinorUnits BigInt
+  createdAt           DateTime @default(now())
+
+  payment             Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  invoice             Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  deal                Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@index([invoiceId])
+  @@map("payment_allocations")
+}
+
+// 8. Milestones Table (Tracks 50%, 30%, 20% billing milestones)
+model Milestone {
+  id                 String          @id @default(uuid())
+  dealId             String
+  milestoneNumber    Int             // 1, 2, 3
+  name               String          // Signing, Go-Live, 90 Days Post Go-Live
+  percentage         Decimal         @db.Decimal(5, 2) // 50.00, 30.00, 20.00
+  targetMinorUnits   BigInt          // Target amount for this milestone
+  status             MilestoneStatus @default(PENDING)
+  scheduledFor       DateTime?       // For the 90-day post go-live job
+  triggeredAt        DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  deal               Deal            @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@unique([dealId, milestoneNumber])
+  @@map("milestones")
+}
+
+// 9. Integration Operations Table (Critical Idempotency & Crash-Safe State Machine)
+model IntegrationOperation {
+  id               String          @id @default(uuid())
+  idempotencyKey   String          @unique
+  operationType    String          // CREATE_CUSTOMER, CREATE_SALES_ORDER, CREATE_INVOICE_M1, etc.
+  dealId           String?
+  status           OperationStatus @default(PENDING)
+  externalRecordId String?         // Stores returned Zoho or HubSpot ID
+  requestPayload   String?         @db.Text
+  responsePayload  String?         @db.Text
+  errorMessage     String?
+  attempts         Int             @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  deal             Deal?           @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([idempotencyKey])
+  @@index([status])
+  @@map("integration_operations")
+}
+
+// 10. Inbound Webhook Events Table (Webhook Deduplication & Raw Audit)
+model WebhookEvent {
+  id          String        @id @default(uuid())
+  source      SystemSource
+  eventType   String
+  payloadHash String        @unique
+  rawPayload  String        @db.Text
+  status      WebhookStatus @default(PENDING)
+  error       String?
+  processedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([source, eventType])
+  @@map("webhook_events")
+}
+
+// 11. Integration Logs Table (Viewable in Dashboard, Redacted)
+model IntegrationLog {
+  id                 String           @id @default(uuid())
+  dealId             String?
+  system             SystemSource
+  direction          TrafficDirection
+  endpoint           String
+  method             String           // GET, POST, PUT, DELETE
+  statusCode         Int
+  durationMs         Int
+  correlationId      String           // Traces end-to-end event chain
+  requestBodyMasked  String?          @db.Text
+  responseBodyMasked String?          @db.Text
+  errorMessage       String?
+  createdAt          DateTime         @default(now())
+
+  deal               Deal?            @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([dealId])
+  @@index([system])
+  @@index([createdAt])
+  @@map("integration_logs")
+}
+
+// 12. Sync Cursors Table (Incremental Synchronization & Poller Checkpoints)
+model SyncCursor {
+  id           String       @id @default(uuid())
+  source       SystemSource
+  entityType   String       // INVOICES, PAYMENTS
+  lastSyncedAt DateTime
+  lastRecordId String?
+  cursorData   String?      @db.Text
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([source, entityType])
+  @@map("sync_cursors")
+}

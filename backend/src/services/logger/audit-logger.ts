@@ -36,6 +36,17 @@ class ApiCallMetrics {
     return count;
   }
 
+  async syncFromDb() {
+    try {
+      this.zohoCallsTotal = await prisma.integrationLog.count({
+        where: { system: SystemSource.ZOHO },
+      });
+      this.hubspotCallsTotal = await prisma.integrationLog.count({
+        where: { system: SystemSource.HUBSPOT },
+      });
+    } catch {}
+  }
+
   getMetrics() {
     return {
       zohoCallsTotal: this.zohoCallsTotal,

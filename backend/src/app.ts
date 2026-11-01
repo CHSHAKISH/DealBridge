@@ -3,6 +3,11 @@ import cors from 'cors';
 import { config } from './config/index.js';
 import { router as apiRouter } from './routes/api.routes.js';
 
+// Global BigInt JSON serialization support
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 export const app = express();
 
 app.use(cors({

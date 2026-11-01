@@ -74,6 +74,15 @@ router.get('/deals', async (_req: Request, res: Response) => {
       dealValueAed: Number(d.dealValueMinorUnits) / 100,
       vatAmountAed: Number(d.vatAmountMinorUnits) / 100,
       totalAmountAed: Number(d.totalAmountMinorUnits) / 100,
+      salesOrder: d.salesOrder
+        ? {
+            ...d.salesOrder,
+            totalMinorUnits: d.salesOrder.totalMinorUnits.toString(),
+            vatMinorUnits: d.salesOrder.vatMinorUnits.toString(),
+            totalAed: Number(d.salesOrder.totalMinorUnits) / 100,
+            vatAed: Number(d.salesOrder.vatMinorUnits) / 100,
+          }
+        : null,
       invoices: d.invoices.map((inv) => ({
         ...inv,
         amountMinorUnits: inv.amountMinorUnits.toString(),
@@ -88,6 +97,18 @@ router.get('/deals', async (_req: Request, res: Response) => {
         ...m,
         targetMinorUnits: m.targetMinorUnits.toString(),
         targetAed: Number(m.targetMinorUnits) / 100,
+      })),
+      paymentAllocations: d.paymentAllocations.map((alloc) => ({
+        ...alloc,
+        allocatedMinorUnits: alloc.allocatedMinorUnits.toString(),
+        allocatedAed: Number(alloc.allocatedMinorUnits) / 100,
+        payment: alloc.payment
+          ? {
+              ...alloc.payment,
+              totalMinorUnits: alloc.payment.totalMinorUnits.toString(),
+              totalAed: Number(alloc.payment.totalMinorUnits) / 100,
+            }
+          : null,
       })),
     }));
 
@@ -112,7 +133,11 @@ router.get('/logs', async (req: Request, res: Response) => {
       where,
       take: limit,
       orderBy: { createdAt: 'desc' },
-      include: { deal: true },
+      include: {
+        deal: {
+          select: { id: true, name: true, hubspotDealId: true },
+        },
+      },
     });
 
     return res.status(200).json(logs);
@@ -122,7 +147,8 @@ router.get('/logs', async (req: Request, res: Response) => {
 });
 
 // API Telemetry Metrics
-router.get('/metrics', (_req: Request, res: Response) => {
+router.get('/metrics', async (_req: Request, res: Response) => {
+  await apiMetrics.syncFromDb();
   return res.status(200).json(apiMetrics.getMetrics());
 });
 

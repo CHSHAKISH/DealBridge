@@ -14,7 +14,8 @@
     "prisma:studio": "prisma studio",
     "seed": "tsx src/database/seed.ts",
     "zoho:token": "tsx src/scripts/get-zoho-token.ts",
-    "verify:env": "tsx src/scripts/verify-connections.ts"
+    "verify:env": "tsx src/scripts/verify-connections.ts",
+    "hubspot:properties": "tsx src/scripts/setup-hubspot-properties.ts"
   },
   "keywords": [
     "crm",

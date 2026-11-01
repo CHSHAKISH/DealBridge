@@ -76,7 +76,7 @@ export const OverviewPage: React.FC = () => {
     {
       label: 'Total Customers',
       value: totalCustomers,
-      sub: 'Mapped to Zoho Contacts',
+      sub: 'Mapped to Zoho Books Customers',
       icon: Building2,
       color: 'text-indigo-600',
       bg: 'bg-indigo-50',
@@ -100,7 +100,7 @@ export const OverviewPage: React.FC = () => {
     {
       label: 'Cash Collected',
       value: `AED ${totalCollectedAed.toLocaleString()}`,
-      sub: `${totalInvoicedAed > 0 ? ((totalCollectedAed / totalInvoicedAed) * 100).toFixed(1) : 0}% collected`,
+      sub: `${totalSalesOrderValue > 0 ? ((totalCollectedAed / totalSalesOrderValue) * 100).toFixed(1) : 0}% collected`,
       icon: Wallet,
       color: 'text-green-600',
       bg: 'bg-green-50',
@@ -135,6 +135,27 @@ export const OverviewPage: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Reconciliation Indicator */}
+      {(() => {
+        const isReconciled = Math.abs(totalCollectedAed + totalOutstandingAed - totalInvoicedAed) < 0.01;
+        return (
+          <div className="flex items-center space-x-3">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${
+              isReconciled
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-rose-50 text-rose-700 border-rose-200'
+            }`}>
+              <span className={`h-2 w-2 rounded-full mr-2 ${isReconciled ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+              {isReconciled ? 'Reconciled' : 'Reconciliation Mismatch'}
+            </span>
+            <span className="text-xs text-slate-500 font-mono">
+              Collected + Outstanding = Invoiced &nbsp;
+              ({totalCollectedAed.toLocaleString()} + {totalOutstandingAed.toLocaleString()} ≈ {totalInvoicedAed.toLocaleString()})
+            </span>
+          </div>
+        );
+      })()}
 
       {/* System Telemetry & Health */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

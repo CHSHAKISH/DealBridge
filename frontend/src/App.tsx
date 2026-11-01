@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   LayoutDashboard, 
   Handshake, 
   ScrollText, 
-  PieChart, 
-  CheckCircle2, 
-  ExternalLink 
+  PieChart 
 } from 'lucide-react';
+import { OverviewPage } from './pages/OverviewPage';
+import { DealsPage } from './pages/DealsPage';
+import { LogsPage } from './pages/LogsPage';
+import { CollectionsPage } from './pages/CollectionsPage';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'deals' | 'logs' | 'collections'>('overview');
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
       {/* Top Navbar */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -28,10 +30,10 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <span className="flex items-center text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+          <div className="flex items-center space-x-3">
+            <span className="flex items-center text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
               <span className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
-              Integration Active
+              Integration Engine Online
             </span>
           </div>
         </div>
@@ -66,31 +68,12 @@ export default function App() {
           })}
         </div>
 
-        {/* Placeholder / Preview Content for Phase 0 */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
-          <div className="max-w-3xl">
-            <div className="flex items-center space-x-3 text-emerald-600 mb-3">
-              <CheckCircle2 className="w-6 h-6" />
-              <h2 className="text-xl font-bold text-slate-900">Phase 0 Initialized Successfully</h2>
-            </div>
-            <p className="text-slate-600 mb-6">
-              DealBridge project scaffolding is ready. The environment features a full Node.js + TypeScript backend with Express, Docker Compose for PostgreSQL & Redis, and a modern React + Tailwind CSS frontend.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <h4 className="font-semibold text-slate-900 mb-1">Backend Setup</h4>
-                <p className="text-slate-500">Node 24 + Express + TypeScript, Prisma ORM, BullMQ queue, and secure environment configuration.</p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <h4 className="font-semibold text-slate-900 mb-1">Frontend Setup</h4>
-                <p className="text-slate-500">React + Vite + Tailwind CSS with layout prepared for Deals, Live Logs, and Collections Aging.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Tab Content */}
+        {activeTab === 'overview' && <OverviewPage />}
+        {activeTab === 'deals' && <DealsPage />}
+        {activeTab === 'logs' && <LogsPage />}
+        {activeTab === 'collections' && <CollectionsPage />}
       </div>
     </div>
   );
 }
-

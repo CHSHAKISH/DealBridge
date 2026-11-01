@@ -103,6 +103,11 @@ export class HubSpotApiClient {
       'zoho_integration_status',
     ];
 
+    // Return synthetic object for non-numeric seed deal IDs to avoid external 404s
+    if (!/^\d+$/.test(dealId)) {
+      return { id: dealId, properties: {} };
+    }
+
     const res = await this.request({
       url: `/objects/deals/${dealId}`,
       method: 'GET',

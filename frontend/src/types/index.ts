@@ -30,6 +30,9 @@ export interface Deal {
     invoiceNumber: string;
     milestoneNumber: number;
     status: 'DRAFT' | 'SENT' | 'PARTIALLY_PAID' | 'PAID' | 'VOID';
+    amountAed?: number;
+    vatAed?: number;
+    paidAed?: number;
     totalAmountAed: number;
     balanceAed: number;
     dueDate: string;

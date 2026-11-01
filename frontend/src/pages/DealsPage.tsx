@@ -21,7 +21,7 @@ export const DealsPage: React.FC = () => {
   // Slide-over & Modal States
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [activeMilestoneModal, setActiveMilestoneModal] = useState<{
-    deal: Deal;
+    dealId: string;
     milestoneNumber: number;
   } | null>(null);
 
@@ -246,7 +246,7 @@ export const DealsPage: React.FC = () => {
                       <td className="py-4 px-4">
                         <div className="flex items-center space-x-1.5" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={() => setActiveMilestoneModal({ deal, milestoneNumber: 1 })}
+                            onClick={() => setActiveMilestoneModal({ dealId: deal.id, milestoneNumber: 1 })}
                             title="Click to view Milestone 1 details"
                             className={`px-2 py-0.5 text-xs font-medium rounded hover:ring-2 hover:ring-blue-400 transition-all ${
                               inv1?.status === 'PAID'
@@ -262,7 +262,7 @@ export const DealsPage: React.FC = () => {
                           </button>
 
                           <button
-                            onClick={() => setActiveMilestoneModal({ deal, milestoneNumber: 2 })}
+                            onClick={() => setActiveMilestoneModal({ dealId: deal.id, milestoneNumber: 2 })}
                             title="Click to view Milestone 2 details"
                             className={`px-2 py-0.5 text-xs font-medium rounded hover:ring-2 hover:ring-blue-400 transition-all ${
                               inv2?.status === 'PAID'
@@ -278,7 +278,7 @@ export const DealsPage: React.FC = () => {
                           </button>
 
                           <button
-                            onClick={() => setActiveMilestoneModal({ deal, milestoneNumber: 3 })}
+                            onClick={() => setActiveMilestoneModal({ dealId: deal.id, milestoneNumber: 3 })}
                             title="Click to view Milestone 3 details"
                             className={`px-2 py-0.5 text-xs font-medium rounded hover:ring-2 hover:ring-blue-400 transition-all ${
                               inv3?.status === 'PAID'
@@ -586,15 +586,18 @@ export const DealsPage: React.FC = () => {
 
       {/* Milestone Modal */}
       {activeMilestoneModal && (() => {
-        const { deal, milestoneNumber } = activeMilestoneModal;
+        const { dealId, milestoneNumber } = activeMilestoneModal;
+        const deal = deals.find((d) => d.id === dealId);
+        if (!deal) return null;
+
         const milestone = deal.milestones.find((m) => m.milestoneNumber === milestoneNumber);
         const invoice = deal.invoices.find((i) => i.milestoneNumber === milestoneNumber && i.status !== 'VOID');
         
         const pct = milestoneNumber === 1 ? 50 : milestoneNumber === 2 ? 30 : 20;
-        const baseAed = (deal.dealValueAed * pct) / 100;
-        const vatAed = (deal.vatAmountAed * pct) / 100;
-        const totalAed = baseAed + vatAed;
-        const paidAed = invoice ? invoice.totalAmountAed - invoice.balanceAed : 0;
+        const baseAed = invoice?.amountAed ?? (deal.dealValueAed * pct) / 100;
+        const vatAed = invoice?.vatAed ?? (deal.vatAmountAed * pct) / 100;
+        const totalAed = invoice?.totalAmountAed ?? (baseAed + vatAed);
+        const paidAed = invoice ? (invoice.paidAed ?? Math.max(0, invoice.totalAmountAed - invoice.balanceAed)) : 0;
         const balanceAed = invoice ? invoice.balanceAed : totalAed;
 
         return (
@@ -607,6 +610,9 @@ export const DealsPage: React.FC = () => {
                   <h3 className="text-lg font-bold text-slate-900 mt-0.5">
                     {milestone?.name || `Milestone ${milestoneNumber} (${pct}%)`}
                   </h3>
+                  <div className="text-xs text-slate-500 font-medium mt-0.5 truncate max-w-sm">
+                    {deal.name} &bull; Total: AED {deal.totalAmountAed.toLocaleString()}
+                  </div>
                 </div>
                 <button
                   onClick={() => setActiveMilestoneModal(null)}

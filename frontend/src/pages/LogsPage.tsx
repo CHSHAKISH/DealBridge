@@ -180,17 +180,17 @@ export const LogsPage: React.FC = () => {
       {/* Logs Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full min-w-[1050px] text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 font-semibold text-slate-600 uppercase tracking-wider">
-                <th className="py-2.5 px-4">Timestamp</th>
-                <th className="py-2.5 px-4">System</th>
-                <th className="py-2.5 px-4">Direction</th>
+                <th className="py-2.5 px-4 whitespace-nowrap">Timestamp</th>
+                <th className="py-2.5 px-4 whitespace-nowrap">System</th>
+                <th className="py-2.5 px-4 whitespace-nowrap">Direction</th>
                 <th className="py-2.5 px-4">Method & Endpoint</th>
-                <th className="py-2.5 px-4">Status</th>
-                <th className="py-2.5 px-4">Duration</th>
+                <th className="py-2.5 px-4 whitespace-nowrap">Status</th>
+                <th className="py-2.5 px-4 whitespace-nowrap">Duration</th>
                 <th className="py-2.5 px-4">Deal / Correlation</th>
-                <th className="py-2.5 px-4 text-right">Inspect</th>
+                <th className="py-2.5 px-4 text-right whitespace-nowrap min-w-[90px]">Inspect</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -217,7 +217,7 @@ export const LogsPage: React.FC = () => {
                         </div>
                       </td>
 
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded font-semibold text-[11px] ${
                           log.system === 'ZOHO' 
                             ? 'bg-amber-50 text-amber-700 border border-amber-200' 
@@ -227,8 +227,8 @@ export const LogsPage: React.FC = () => {
                         </span>
                       </td>
 
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-0.5 rounded font-medium text-[11px] ${
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium text-[11px] whitespace-nowrap ${
                           log.direction === 'OUTBOUND'
                             ? 'bg-blue-50 text-blue-700 border border-blue-200'
                             : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -242,7 +242,7 @@ export const LogsPage: React.FC = () => {
                         <span className="text-slate-600">{log.endpoint}</span>
                       </td>
 
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded-full font-bold text-[11px] ${
                           isSuccess
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -252,7 +252,7 @@ export const LogsPage: React.FC = () => {
                         </span>
                       </td>
 
-                      <td className="py-3 px-4 text-slate-500 font-mono">
+                      <td className="py-3 px-4 text-slate-500 font-mono whitespace-nowrap">
                         {log.durationMs}ms
                       </td>
 
@@ -263,7 +263,7 @@ export const LogsPage: React.FC = () => {
                         <div className="text-[10px] text-slate-400 font-mono">{log.correlationId}</div>
                       </td>
 
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 text-right whitespace-nowrap min-w-[90px]">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

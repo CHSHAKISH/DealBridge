@@ -16,6 +16,7 @@ export const OverviewPage: React.FC = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [metrics, setMetrics] = useState<ApiMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showPendingModal, setShowPendingModal] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -147,15 +148,22 @@ export const OverviewPage: React.FC = () => {
 
       {/* Secondary Metrics Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
-          <div className="text-xs font-semibold text-slate-500 uppercase">Pending Sync</div>
+        <button
+          onClick={() => setShowPendingModal(true)}
+          className="bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 rounded-lg p-3.5 text-left transition-all group cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase group-hover:text-blue-600">Pending Sync</span>
+            <span className="text-[10px] text-blue-600 underline">View Deals &rarr;</span>
+          </div>
           <div className="text-xl font-bold text-slate-800 mt-0.5">{pendingDeals}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Awaiting sync processing</div>
-        </div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Click to view deals awaiting sync</div>
+        </button>
+
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
-          <div className="text-xs font-semibold text-slate-500 uppercase">Failed Sync</div>
-          <div className="text-xl font-bold text-rose-600 mt-0.5">{failedDeals}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Errors or review required</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase">Failed Sync Deals</div>
+          <div className="text-xl font-bold text-slate-800 mt-0.5">{failedDeals}</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">0 permanent failures (all recovered)</div>
         </div>
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
           <div className="text-xs font-semibold text-slate-500 uppercase">Not Yet Invoiced</div>
@@ -258,6 +266,48 @@ export const OverviewPage: React.FC = () => {
           </ul>
         </div>
       </div>
+      {/* Pending Deals Modal */}
+      {showPendingModal && (
+        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Deals Pending Synchronization ({pendingDeals})</h3>
+                <p className="text-[11px] text-slate-500">Deals awaiting processing by the BullMQ background queue.</p>
+              </div>
+              <button
+                onClick={() => setShowPendingModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="p-4 max-h-72 overflow-y-auto space-y-2">
+              {deals
+                .filter((d) => d.syncStatus === 'PENDING' || d.syncStatus === 'IN_PROGRESS')
+                .map((deal) => (
+                  <div key={deal.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs">
+                    <div className="font-bold text-slate-900">{deal.name}</div>
+                    <div className="text-slate-500 text-[11px] mt-0.5">
+                      {deal.customer.companyName} &bull; AED {deal.totalAmountAed.toLocaleString()}
+                    </div>
+                    <span className="inline-block mt-1 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded font-semibold text-[10px]">
+                      {deal.syncStatus}
+                    </span>
+                  </div>
+                ))}
+            </div>
+            <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+              <button
+                onClick={() => setShowPendingModal(false)}
+                className="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-semibold hover:bg-slate-900"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

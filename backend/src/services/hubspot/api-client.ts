@@ -69,6 +69,18 @@ export class HubSpotApiClient {
   }
 
   /**
+   * Creates a new deal in HubSpot CRM
+   */
+  async createDeal(properties: Record<string, any>): Promise<any> {
+    const res = await this.request({
+      url: '/objects/deals',
+      method: 'POST',
+      data: { properties },
+    });
+    return res;
+  }
+
+  /**
    * Retrieves deal details along with associated company IDs
    */
   async getDeal(dealId: string): Promise<any> {

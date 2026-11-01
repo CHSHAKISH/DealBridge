@@ -167,6 +167,25 @@ export class ZohoApiClient {
     return res.items || [];
   }
 
+  async createItem(itemData: {
+    name: string;
+    rate: number;
+    description?: string;
+    product_type?: string;
+  }): Promise<any> {
+    const res = await this.request({
+      url: '/items',
+      method: 'POST',
+      data: {
+        name: itemData.name,
+        rate: itemData.rate,
+        description: itemData.description || itemData.name,
+        product_type: itemData.product_type || 'service',
+      },
+    });
+    return res.item;
+  }
+
   async createSalesOrder(orderData: {
     customer_id: string;
     salesorder_number?: string;

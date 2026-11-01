@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { config } from './config/index.js';
+import { router as apiRouter } from './routes/api.routes.js';
 
 export const app = express();
 
@@ -43,6 +44,9 @@ app.get('/api', (_req: Request, res: Response) => {
     }
   });
 });
+
+// API Routes
+app.use('/api', apiRouter);
 
 export default app;
 

@@ -77,9 +77,24 @@ export async function logApiCall(entry: LogEntry): Promise<void> {
   }
 
   try {
+    let internalDealId: string | null = null;
+    if (entry.dealId) {
+      // Check if entry.dealId is an internal UUID or a hubspotDealId
+      const deal = await prisma.deal.findFirst({
+        where: {
+          OR: [
+            { id: entry.dealId },
+            { hubspotDealId: entry.dealId },
+          ],
+        },
+        select: { id: true },
+      });
+      if (deal) internalDealId = deal.id;
+    }
+
     await prisma.integrationLog.create({
       data: {
-        dealId: entry.dealId || null,
+        dealId: internalDealId,
         system: entry.system,
         direction: entry.direction,
         endpoint: entry.endpoint,

@@ -168,13 +168,17 @@ router.get('/collections', async (_req: Request, res: Response) => {
       },
     });
 
-    // Group unpaid invoices by Customer
+    // Group unpaid invoices by Customer (grouped by TRN or normalized company name to prevent duplicate rows)
     const customerMap: Record<string, any> = {};
 
     for (const inv of invoices) {
       const customer = inv.deal.customer;
-      if (!customerMap[customer.id]) {
-        customerMap[customer.id] = {
+      const key = customer.taxRegistrationNo
+        ? `TRN_${customer.taxRegistrationNo.trim()}`
+        : customer.companyName.trim().toLowerCase();
+
+      if (!customerMap[key]) {
+        customerMap[key] = {
           customerId: customer.id,
           customerName: customer.companyName,
           taxNumber: customer.taxRegistrationNo,
@@ -192,7 +196,7 @@ router.get('/collections', async (_req: Request, res: Response) => {
         };
       }
 
-      const entry = customerMap[customer.id];
+      const entry = customerMap[key];
       entry.totalOutstandingFils += inv.balanceMinorUnits;
       entry.deals.add(inv.deal.name);
 

@@ -24,16 +24,20 @@ app.use(express.json({
 app.use(express.urlencoded({ extended: true }));
 
 // Health Check Endpoint
-app.get('/health', (_req: Request, res: Response) => {
+const handleHealth = (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'healthy',
     service: 'DealBridge Integration Engine',
+    uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     environment: config.nodeEnv,
     zohoRegion: config.zoho.region,
     baseCurrency: config.business.defaultCurrency,
   });
-});
+};
+
+app.get('/health', handleHealth);
+app.get('/api/health', handleHealth);
 
 // Root API Welcome
 app.get('/api', (_req: Request, res: Response) => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Handshake, 
@@ -12,6 +12,31 @@ import { CollectionsPage } from './pages/CollectionsPage';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'deals' | 'logs' | 'collections'>('overview');
+  const [engineStatus, setEngineStatus] = useState<'online' | 'degraded' | 'offline'>('online');
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const res = await fetch('/api/health');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'healthy') {
+            setEngineStatus('online');
+          } else {
+            setEngineStatus('degraded');
+          }
+        } else {
+          setEngineStatus('degraded');
+        }
+      } catch {
+        setEngineStatus('offline');
+      }
+    };
+
+    checkHealth();
+    const interval = setInterval(checkHealth, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
@@ -31,10 +56,24 @@ export default function App() {
           </div>
 
           <div className="flex items-center space-x-3">
-            <span className="flex items-center text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
-              Integration Engine Online
-            </span>
+            {engineStatus === 'online' && (
+              <span className="flex items-center text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                Integration Engine Online
+              </span>
+            )}
+            {engineStatus === 'degraded' && (
+              <span className="flex items-center text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                <span className="h-2 w-2 rounded-full bg-amber-500 mr-1.5"></span>
+                Integration Engine Degraded
+              </span>
+            )}
+            {engineStatus === 'offline' && (
+              <span className="flex items-center text-xs font-medium text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
+                <span className="h-2 w-2 rounded-full bg-rose-500 mr-1.5"></span>
+                Integration Engine Offline
+              </span>
+            )}
           </div>
         </div>
       </header>

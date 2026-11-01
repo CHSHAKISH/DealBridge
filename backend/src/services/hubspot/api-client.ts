@@ -140,6 +140,11 @@ export class HubSpotApiClient {
     currentProperties?: Record<string, any>,
     correlationId?: string
   ): Promise<{ updated: boolean; changedFields: string[] }> {
+    // Skip external API call if dealId is a simulated seed deal (not numeric)
+    if (!/^\d+$/.test(dealId)) {
+      return { updated: false, changedFields: [] };
+    }
+
     const changedProperties: Record<string, any> = {};
     const changedFields: string[] = [];
 

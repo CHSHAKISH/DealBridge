@@ -90,29 +90,33 @@ export class ReverseSyncService {
     console.log(`  - Overdue: ${isOverdue ? 'Yes' : 'No'}`);
 
     // Update HubSpot Deal Properties (Diff-Based update - only writes changed fields)
-    const updateResult = await hubspotApiClient.updateDealIfChanged(
-      deal.hubspotDealId,
-      {
-        zoho_sales_order_id: deal.salesOrder.salesOrderNumber,
-        zoho_sales_order_total: salesOrderTotalAed,
-        zoho_total_invoiced: totalInvoicedAed,
-        zoho_percentage_invoiced: parseFloat(pctInvoiced.toFixed(2)),
-        zoho_total_collected: totalCollectedAed,
-        zoho_percentage_collected: parseFloat(pctCollected.toFixed(2)),
-        zoho_amount_unpaid: amountUnpaidAed,
-        zoho_amount_not_invoiced: amountNotInvoicedAed,
-        zoho_next_due_date: earliestDueDate ? earliestDueDate.toISOString().split('T')[0] : '',
-        zoho_is_overdue: isOverdue ? 'true' : 'false',
-        zoho_integration_status: 'synced',
-      },
-      undefined,
-      correlationId
-    );
+    try {
+      const updateResult = await hubspotApiClient.updateDealIfChanged(
+        deal.hubspotDealId,
+        {
+          zoho_sales_order_id: deal.salesOrder.salesOrderNumber,
+          zoho_sales_order_total: salesOrderTotalAed,
+          zoho_total_invoiced: totalInvoicedAed,
+          zoho_percentage_invoiced: parseFloat(pctInvoiced.toFixed(2)),
+          zoho_total_collected: totalCollectedAed,
+          zoho_percentage_collected: parseFloat(pctCollected.toFixed(2)),
+          zoho_amount_unpaid: amountUnpaidAed,
+          zoho_amount_not_invoiced: amountNotInvoicedAed,
+          zoho_next_due_date: earliestDueDate ? earliestDueDate.toISOString().split('T')[0] : '',
+          zoho_is_overdue: isOverdue ? 'true' : 'false',
+          zoho_integration_status: 'synced',
+        },
+        undefined,
+        correlationId
+      );
 
-    if (updateResult.updated) {
-      console.log(`✓ Synchronized updated fields to HubSpot: [${updateResult.changedFields.join(', ')}]`);
-    } else {
-      console.log(`✓ No property changes detected. HubSpot write omitted (Quota saved!).`);
+      if (updateResult.updated) {
+        console.log(`✓ Synchronized updated fields to HubSpot: [${updateResult.changedFields.join(', ')}]`);
+      } else {
+        console.log(`✓ No property changes detected. HubSpot write omitted (Quota saved!).`);
+      }
+    } catch (err: any) {
+      console.warn(`[ReverseSync] Could not push to HubSpot CRM for deal ${deal.hubspotDealId}: ${err.message}`);
     }
 
     return {

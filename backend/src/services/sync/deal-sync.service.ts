@@ -372,22 +372,37 @@ export class DealSyncService {
     const targetM = financials.milestones.find((m) => m.milestoneNumber === milestoneNumber)!;
     const todayStr = new Date().toISOString().split('T')[0];
 
-    const zohoInvoice = await zohoApiClient.createInvoice({
-      customer_id: deal.customer.zohoContactId,
-      salesorder_id: deal.salesOrder.zohoSalesOrderId,
-      reference_number: `M${milestoneNumber}-${targetM.name}-${deal.hubspotDealId}`,
-      date: todayStr,
-      currency_code: 'AED',
-      line_items: [
-        {
-          name: `Enterprise Software Implementation - Milestone ${milestoneNumber} (${targetM.name})`,
-          rate: targetM.baseAmountAed,
-          quantity: 1,
-          tax_percentage: 5,
-        },
-      ],
-      notes: `Milestone ${milestoneNumber} (${targetM.name}) against Sales Order ${deal.salesOrder.salesOrderNumber}`,
-    }, deal.id);
+    let zohoInvoiceId: string;
+    let invoiceNumber: string;
+
+    // Check if it's a real Zoho Contact (numeric ID) or a seed contact (starts with zoho_cnt_)
+    const isRealZoho = /^\d+$/.test(deal.customer.zohoContactId);
+
+    if (isRealZoho) {
+      const zohoInvoice = await zohoApiClient.createInvoice({
+        customer_id: deal.customer.zohoContactId,
+        salesorder_id: deal.salesOrder.zohoSalesOrderId,
+        reference_number: `M${milestoneNumber}-${targetM.name}-${deal.hubspotDealId}`,
+        date: todayStr,
+        currency_code: 'AED',
+        line_items: [
+          {
+            name: `Enterprise Software Implementation - Milestone ${milestoneNumber} (${targetM.name})`,
+            rate: targetM.baseAmountAed,
+            quantity: 1,
+            tax_percentage: 5,
+          },
+        ],
+        notes: `Milestone ${milestoneNumber} (${targetM.name}) against Sales Order ${deal.salesOrder.salesOrderNumber}`,
+      }, deal.id);
+
+      zohoInvoiceId = zohoInvoice.invoice_id;
+      invoiceNumber = zohoInvoice.invoice_number;
+    } else {
+      // Mock / Seed deal invoice generation
+      invoiceNumber = `INV-${deal.salesOrder.salesOrderNumber.replace('SO-', '')}-${milestoneNumber}`;
+      zohoInvoiceId = `zoho_inv_${invoiceNumber.toLowerCase()}`;
+    }
 
     // Persist invoice
     await prisma.invoice.create({
@@ -395,8 +410,8 @@ export class DealSyncService {
         salesOrderId: deal.salesOrder.id,
         dealId: deal.id,
         milestoneNumber,
-        zohoInvoiceId: zohoInvoice.invoice_id,
-        invoiceNumber: zohoInvoice.invoice_number,
+        zohoInvoiceId,
+        invoiceNumber,
         status: InvoiceStatus.SENT,
         amountMinorUnits: targetM.baseAmountMinorUnits,
         vatMinorUnits: targetM.vatAmountMinorUnits,
@@ -421,7 +436,11 @@ export class DealSyncService {
       },
     });
 
-    console.log(`✓ Milestone ${milestoneNumber} Invoice ${zohoInvoice.invoice_number} created.`);
-    return zohoInvoice;
+    // Reconcile reverse sync so totals update
+    const { ReverseSyncService } = await import('./reverse-sync.service.js');
+    await ReverseSyncService.reconcileDealFinancials(deal.id);
+
+    console.log(`✓ Milestone ${milestoneNumber} Invoice ${invoiceNumber} created and reconciled.`);
+    return { invoice_id: zohoInvoiceId, invoice_number: invoiceNumber };
   }
 }

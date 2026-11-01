@@ -33,6 +33,8 @@ export interface Deal {
     totalAmountAed: number;
     balanceAed: number;
     dueDate: string;
+    createdAt?: string;
+    replacementInvoiceId?: string;
   }>;
   milestones: Array<{
     id: string;
@@ -41,6 +43,16 @@ export interface Deal {
     percentage: number;
     targetAed: number;
     status: 'PENDING' | 'TRIGGERED' | 'INVOICED';
+  }>;
+  paymentAllocations?: Array<{
+    id: string;
+    allocatedAed: number;
+    payment?: {
+      paymentNumber: string;
+      totalAed: number;
+      paymentDate: string;
+      paymentMode?: string;
+    } | null;
   }>;
 }
 

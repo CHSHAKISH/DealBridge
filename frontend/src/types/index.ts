@@ -84,5 +84,8 @@ export interface ApiMetrics {
   zohoCallsTotal: number;
   zohoCallsLastSync: number;
   hubspotCallsTotal: number;
+  retryCount?: number;
+  failureCount?: number;
+  lastSuccessfulSync?: string | null;
 }
 

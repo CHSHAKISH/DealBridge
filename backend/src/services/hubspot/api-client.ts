@@ -157,7 +157,7 @@ export class HubSpotApiClient {
 
     // Compare each field to determine delta
     for (const [key, value] of Object.entries(newProperties)) {
-      const currentValue = current[key];
+      const currentValue = current ? current[key] : undefined;
       // Normalize values to string comparison
       const normalizedCurrent = currentValue !== undefined && currentValue !== null ? String(currentValue).trim() : '';
       const normalizedNew = value !== undefined && value !== null ? String(value).trim() : '';

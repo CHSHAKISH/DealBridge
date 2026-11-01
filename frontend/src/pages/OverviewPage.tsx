@@ -54,15 +54,24 @@ export const OverviewPage: React.FC = () => {
   // Total Invoiced and Total Collected from active invoices
   let totalInvoicedAed = 0;
   let totalOutstandingAed = 0;
+  let totalOverdueAed = 0;
+  const now = new Date();
+
   deals.forEach((d) => {
     d.invoices.forEach((inv) => {
       if (inv.status !== 'VOID') {
         totalInvoicedAed += inv.totalAmountAed;
         totalOutstandingAed += inv.balanceAed;
+        if (inv.balanceAed > 0 && new Date(inv.dueDate) < now) {
+          totalOverdueAed += inv.balanceAed;
+        }
       }
     });
   });
   const totalCollectedAed = Math.max(0, totalInvoicedAed - totalOutstandingAed);
+  const pendingDeals = deals.filter((d) => d.syncStatus === 'PENDING' || d.syncStatus === 'IN_PROGRESS').length;
+  const failedDeals = deals.filter((d) => d.syncStatus === 'ERROR' || d.syncStatus === 'NEEDS_REVIEW').length;
+  const notYetInvoicedAed = Math.max(0, totalSalesOrderValue - totalInvoicedAed);
 
   const kpis = [
     {
@@ -136,22 +145,45 @@ export const OverviewPage: React.FC = () => {
         })}
       </div>
 
+      {/* Secondary Metrics Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+          <div className="text-xs font-semibold text-slate-500 uppercase">Pending Sync</div>
+          <div className="text-xl font-bold text-slate-800 mt-0.5">{pendingDeals}</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Awaiting sync processing</div>
+        </div>
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+          <div className="text-xs font-semibold text-slate-500 uppercase">Failed Sync</div>
+          <div className="text-xl font-bold text-rose-600 mt-0.5">{failedDeals}</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Errors or review required</div>
+        </div>
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+          <div className="text-xs font-semibold text-slate-500 uppercase">Not Yet Invoiced</div>
+          <div className="text-xl font-bold text-slate-800 mt-0.5">AED {notYetInvoicedAed.toLocaleString()}</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Unbilled order value</div>
+        </div>
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+          <div className="text-xs font-semibold text-slate-500 uppercase">Total Overdue</div>
+          <div className="text-xl font-bold text-amber-600 mt-0.5">AED {totalOverdueAed.toLocaleString()}</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Invoices past due date</div>
+        </div>
+      </div>
+
       {/* Reconciliation Indicator */}
       {(() => {
         const isReconciled = Math.abs(totalCollectedAed + totalOutstandingAed - totalInvoicedAed) < 0.01;
         return (
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${
               isReconciled
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 : 'bg-rose-50 text-rose-700 border-rose-200'
             }`}>
               <span className={`h-2 w-2 rounded-full mr-2 ${isReconciled ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-              {isReconciled ? 'Reconciled' : 'Reconciliation Mismatch'}
+              {isReconciled ? 'Financial Records Reconciled' : 'Reconciliation Mismatch'}
             </span>
             <span className="text-xs text-slate-500 font-mono">
-              Collected + Outstanding = Invoiced &nbsp;
-              ({totalCollectedAed.toLocaleString()} + {totalOutstandingAed.toLocaleString()} ≈ {totalInvoicedAed.toLocaleString()})
+              Collected ({totalCollectedAed.toLocaleString()}) + Outstanding ({totalOutstandingAed.toLocaleString()}) = Invoiced ({totalInvoicedAed.toLocaleString()})
             </span>
           </div>
         );
@@ -170,18 +202,32 @@ export const OverviewPage: React.FC = () => {
             Required assignment metric measuring Zoho Books API consumption from Closed Won to paid.
           </p>
 
-          <div className="space-y-3">
-            <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+          <div className="space-y-2.5">
+            <div className="flex justify-between items-center p-2.5 bg-slate-50 rounded-lg">
               <span className="text-sm font-medium text-slate-700">Total Zoho Books API Calls:</span>
               <span className="text-sm font-bold text-blue-600">{metrics?.zohoCallsTotal || 0}</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+            <div className="flex justify-between items-center p-2.5 bg-slate-50 rounded-lg">
               <span className="text-sm font-medium text-slate-700">Zoho Calls During Idle Sync:</span>
               <span className="text-sm font-bold text-slate-800">{metrics?.zohoCallsLastSync || 0}</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+            <div className="flex justify-between items-center p-2.5 bg-slate-50 rounded-lg">
               <span className="text-sm font-medium text-slate-700">Total HubSpot CRM API Calls:</span>
               <span className="text-sm font-bold text-indigo-600">{metrics?.hubspotCallsTotal || 0}</span>
+            </div>
+            <div className="flex justify-between items-center p-2.5 bg-slate-50 rounded-lg">
+              <span className="text-sm font-medium text-slate-700">Retry Count:</span>
+              <span className="text-sm font-bold text-amber-600">{metrics?.retryCount || 0}</span>
+            </div>
+            <div className="flex justify-between items-center p-2.5 bg-slate-50 rounded-lg">
+              <span className="text-sm font-medium text-slate-700">API Failure Count:</span>
+              <span className="text-sm font-bold text-rose-600">{metrics?.failureCount || 0}</span>
+            </div>
+            <div className="flex justify-between items-center p-2.5 bg-slate-50 rounded-lg">
+              <span className="text-sm font-medium text-slate-700">Last Successful Synchronization:</span>
+              <span className="text-xs font-semibold text-slate-800">
+                {metrics?.lastSuccessfulSync ? new Date(metrics.lastSuccessfulSync).toLocaleString() : 'N/A'}
+              </span>
             </div>
           </div>
         </div>

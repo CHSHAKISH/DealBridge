@@ -20,6 +20,9 @@ class ApiCallMetrics {
   private zohoCallsTotal = 0;
   private zohoCallsLastSync = 0;
   private hubspotCallsTotal = 0;
+  private retryCount = 0;
+  private failureCount = 0;
+  private lastSuccessfulSync: string | null = null;
 
   incrementZoho() {
     this.zohoCallsTotal++;
@@ -44,6 +47,18 @@ class ApiCallMetrics {
       this.hubspotCallsTotal = await prisma.integrationLog.count({
         where: { system: SystemSource.HUBSPOT },
       });
+      this.failureCount = await prisma.integrationLog.count({
+        where: { statusCode: { gte: 400 } },
+      });
+      this.retryCount = await prisma.integrationOperation.count({
+        where: { attempts: { gt: 1 } },
+      });
+      const lastSuccessLog = await prisma.integrationLog.findFirst({
+        where: { statusCode: { gte: 200, lt: 300 } },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true },
+      });
+      this.lastSuccessfulSync = lastSuccessLog ? lastSuccessLog.createdAt.toISOString() : null;
     } catch {}
   }
 
@@ -52,6 +67,9 @@ class ApiCallMetrics {
       zohoCallsTotal: this.zohoCallsTotal,
       zohoCallsLastSync: this.zohoCallsLastSync,
       hubspotCallsTotal: this.hubspotCallsTotal,
+      retryCount: this.retryCount,
+      failureCount: this.failureCount,
+      lastSuccessfulSync: this.lastSuccessfulSync,
     };
   }
 }

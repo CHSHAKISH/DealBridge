@@ -57,5 +57,24 @@ app.get('/api', (_req: Request, res: Response) => {
 // API Routes
 app.use('/api', apiRouter);
 
+// Serve frontend static build in production if available
+import path from 'path';
+import fs from 'fs';
+const frontendDistPath = path.resolve(process.cwd(), '../frontend/dist');
+const altFrontendDistPath = path.resolve(process.cwd(), 'frontend/dist');
+const finalDistPath = fs.existsSync(frontendDistPath) 
+  ? frontendDistPath 
+  : (fs.existsSync(altFrontendDistPath) ? altFrontendDistPath : null);
+
+if (finalDistPath) {
+  app.use(express.static(finalDistPath));
+  app.get('*', (req: Request, res: Response, next) => {
+    if (req.path.startsWith('/api') || req.path === '/health') {
+      return next();
+    }
+    res.sendFile(path.join(finalDistPath, 'index.html'));
+  });
+}
+
 export default app;
 

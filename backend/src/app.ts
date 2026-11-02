@@ -11,7 +11,7 @@ import { router as apiRouter } from './routes/api.routes.js';
 export const app = express();
 
 app.use(cors({
-  origin: config.frontendUrl,
+  origin: true, // Allow all origins including Vercel and local development
   credentials: true,
 }));
 

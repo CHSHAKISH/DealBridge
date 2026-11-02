@@ -2,10 +2,32 @@ import { Queue, Worker, Job } from 'bullmq';
 import { config } from '../config/index.js';
 import { DealSyncService } from '../services/sync/deal-sync.service.js';
 
-const connection = {
-  host: 'localhost',
-  port: 6379,
-};
+// Dynamic Redis connection configuration supporting local and cloud Redis (Upstash, Render, etc.)
+function getRedisConnection() {
+  const redisUrl = process.env.REDIS_URL;
+  if (redisUrl) {
+    try {
+      const parsed = new URL(redisUrl);
+      return {
+        host: parsed.hostname,
+        port: parseInt(parsed.port || '6379', 10),
+        username: parsed.username || undefined,
+        password: parsed.password || undefined,
+        tls: parsed.protocol === 'rediss:' ? { rejectUnauthorized: false } : undefined,
+      };
+    } catch {
+      // Fallback if URL parsing fails
+    }
+  }
+
+  return {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    password: process.env.REDIS_PASSWORD || undefined,
+  };
+}
+
+const connection = getRedisConnection();
 
 export const dealSyncQueue = new Queue('deal-sync-queue', {
   connection,

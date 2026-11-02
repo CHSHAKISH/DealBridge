@@ -39,6 +39,22 @@ const handleHealth = (_req: Request, res: Response) => {
 app.get('/health', handleHealth);
 app.get('/api/health', handleHealth);
 
+// Root Welcome Route
+app.get('/', (_req: Request, res: Response) => {
+  res.json({
+    name: 'DealBridge Integration Engine API',
+    status: 'online',
+    health: '/health',
+    api: '/api',
+    endpoints: {
+      deals: '/api/deals',
+      logs: '/api/logs',
+      collections: '/api/collections',
+      metrics: '/api/metrics',
+    },
+  });
+});
+
 // Root API Welcome
 app.get('/api', (_req: Request, res: Response) => {
   res.json({
